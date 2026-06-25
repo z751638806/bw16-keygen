@@ -383,9 +383,123 @@
     .result-code { font-size: 17px; }
     .mac-input { font-size: 15px; }
   }
+
+  /* Password Overlay */
+  .overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    background: var(--bg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    transition: opacity 0.6s ease, visibility 0.6s ease;
+  }
+
+  .overlay.hidden {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+  }
+
+  .login-box {
+    width: 100%;
+    max-width: 380px;
+    text-align: center;
+  }
+
+  .login-box .lock-icon {
+    font-size: 48px;
+    margin-bottom: 20px;
+    display: block;
+  }
+
+  .login-box h2 {
+    font-family: var(--mono);
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 8px;
+  }
+
+  .login-box p {
+    font-size: 13px;
+    color: var(--text-dim);
+    margin-bottom: 24px;
+  }
+
+  .login-box .pw-input {
+    width: 100%;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 14px 16px;
+    font-family: var(--mono);
+    font-size: 16px;
+    color: var(--text);
+    text-align: center;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    margin-bottom: 12px;
+    box-sizing: border-box;
+  }
+
+  .login-box .pw-input:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-dim);
+  }
+
+  .login-box .pw-input::placeholder {
+    color: var(--text-muted);
+  }
+
+  .login-box .login-btn {
+    width: 100%;
+    padding: 14px;
+    background: var(--accent);
+    color: #000;
+    border: none;
+    border-radius: 8px;
+    font-family: var(--sans);
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.15s, transform 0.1s;
+  }
+
+  .login-box .login-btn:hover { background: #26c466; }
+  .login-box .login-btn:active { transform: scale(0.985); }
+
+  .login-box .pw-error {
+    font-size: 12px;
+    color: var(--danger);
+    min-height: 20px;
+    margin-bottom: 8px;
+  }
+
+  .login-box .pw-hint {
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-top: 16px;
+  }
+
 </style>
 </head>
 <body>
+<!-- Password Overlay -->
+<div class="overlay" id="overlay">
+  <div class="login-box">
+    <span class="lock-icon">🔐</span>
+    <h2>BW16 Keygen</h2>
+    <p>请输入访问密码</p>
+    <input type="password" class="pw-input" id="pwInput" placeholder="输入密码" autocomplete="off">
+    <div class="pw-error" id="pwError"></div>
+    <button class="login-btn" id="loginBtn">验证</button>
+    <div class="pw-hint">仅限授权商家使用</div>
+  </div>
+</div>
+
 
 <div class="container">
   <header class="header">
@@ -439,6 +553,32 @@
 </div>
 
 <script>
+
+// ── Access Control ──
+const ACCESS_PASSWORD = 'bw16keygen';
+
+const overlay = document.getElementById('overlay');
+const pwInput = document.getElementById('pwInput');
+const pwError = document.getElementById('pwError');
+const loginBtn = document.getElementById('loginBtn');
+
+function checkPassword() {
+  if (pwInput.value === ACCESS_PASSWORD) {
+    overlay.classList.add('hidden');
+    macInput.focus();
+  } else {
+    pwError.textContent = '密码错误，请重试';
+    pwInput.value = '';
+    pwInput.focus();
+    setTimeout(() => { pwError.textContent = ''; }, 2000);
+  }
+}
+
+loginBtn.addEventListener('click', checkPassword);
+pwInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') checkPassword(); });
+pwInput.focus();
+
+
 // ── Crypto Logic (ported from activation_keygen.py) ──
 
 const SBOX = [

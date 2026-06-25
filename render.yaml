@@ -1,0 +1,14 @@
+services:
+  - type: web
+    name: bw16-keygen
+    runtime: python
+    repo: https://github.com/z751638806/bw16-keygen
+    plan: free
+    branch: main
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn app:app --bind 0.0.0.0:$PORT --workers 2
+    envVars:
+      - key: AUTH_USER
+        value: admin
+      - key: AUTH_PASS
+        value: bw16keygen

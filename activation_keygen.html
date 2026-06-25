@@ -1,0 +1,713 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BW16 激活码生成器</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Inter:wght@400;500;600;700&display=swap');
+
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --bg: #0a0a0a;
+    --surface: #111111;
+    --surface-2: #1a1a1a;
+    --border: #222222;
+    --border-focus: #2ed573;
+    --text: #e8e8e8;
+    --text-dim: #666666;
+    --text-muted: #444444;
+    --accent: #2ed573;
+    --accent-dim: rgba(46, 213, 115, 0.12);
+    --accent-glow: rgba(46, 213, 115, 0.25);
+    --danger: #ff4757;
+    --warn: #ff9f43;
+    --mono: 'JetBrains Mono', monospace;
+    --sans: 'Inter', -apple-system, sans-serif;
+  }
+
+  html { font-size: 16px; -webkit-font-smoothing: antialiased; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+  }
+
+  .container {
+    width: 100%;
+    max-width: 480px;
+  }
+
+  /* Header */
+  .header {
+    margin-bottom: 40px;
+    text-align: center;
+  }
+
+  .header-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--accent-dim);
+    border: 1px solid rgba(46, 213, 115, 0.15);
+    border-radius: 100px;
+    padding: 5px 14px;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--accent);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    margin-bottom: 20px;
+  }
+
+  .header-badge::before {
+    content: '';
+    width: 6px;
+    height: 6px;
+    background: var(--accent);
+    border-radius: 50%;
+    animation: pulse-dot 2s ease-in-out infinite;
+  }
+
+  @keyframes pulse-dot {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+  }
+
+  .header h1 {
+    font-family: var(--mono);
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--text);
+    letter-spacing: -0.02em;
+    line-height: 1.2;
+  }
+
+  .header h1 span {
+    color: var(--accent);
+  }
+
+  .header p {
+    margin-top: 8px;
+    font-size: 13px;
+    color: var(--text-dim);
+    font-weight: 400;
+  }
+
+  /* Card */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+  }
+
+  .card + .card {
+    margin-top: 12px;
+  }
+
+  .card-section {
+    padding: 24px;
+  }
+
+  .card-section + .card-section {
+    border-top: 1px solid var(--border);
+  }
+
+  /* Input */
+  .label {
+    display: block;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-dim);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+  }
+
+  .input-wrap {
+    position: relative;
+  }
+
+  .mac-input {
+    width: 100%;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 14px 16px;
+    font-family: var(--mono);
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--text);
+    text-align: center;
+    letter-spacing: 0.08em;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+
+  .mac-input::placeholder {
+    color: var(--text-muted);
+    font-weight: 400;
+    font-size: 14px;
+    letter-spacing: 0.02em;
+  }
+
+  .mac-input:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-dim);
+  }
+
+  .mac-input.valid {
+    border-color: var(--accent);
+  }
+
+  .mac-input.invalid {
+    border-color: var(--danger);
+    box-shadow: 0 0 0 3px rgba(255, 71, 87, 0.1);
+  }
+
+  .input-hint {
+    margin-top: 8px;
+    font-size: 12px;
+    color: var(--text-muted);
+    text-align: center;
+    min-height: 18px;
+    transition: color 0.2s;
+  }
+
+  .input-hint.ok { color: var(--accent); }
+  .input-hint.err { color: var(--danger); }
+  .input-hint.warn { color: var(--warn); }
+
+  /* Button */
+  .gen-btn {
+    width: 100%;
+    padding: 14px;
+    background: var(--accent);
+    color: #000;
+    border: none;
+    border-radius: 8px;
+    font-family: var(--sans);
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    cursor: pointer;
+    transition: background 0.15s, transform 0.1s, opacity 0.15s;
+    margin-top: 16px;
+  }
+
+  .gen-btn:hover { background: #26c466; }
+  .gen-btn:active { transform: scale(0.985); }
+  .gen-btn:disabled {
+    background: var(--surface-2);
+    color: var(--text-muted);
+    cursor: not-allowed;
+    transform: none;
+  }
+
+  /* Result */
+  .result-area {
+    text-align: center;
+  }
+
+  .result-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-dim);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 14px;
+  }
+
+  .result-code {
+    font-family: var(--mono);
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--text-muted);
+    letter-spacing: 0.06em;
+    line-height: 1.5;
+    word-break: break-all;
+    transition: color 0.4s;
+    user-select: all;
+  }
+
+  .result-code.active {
+    color: var(--accent);
+    animation: reveal-code 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  @keyframes reveal-code {
+    0% { opacity: 0; transform: translateY(8px) scale(0.96); filter: blur(4px); }
+    100% { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); }
+  }
+
+  .result-mac {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-top: 6px;
+  }
+
+  /* Actions */
+  .actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 16px;
+  }
+
+  .action-btn {
+    flex: 1;
+    padding: 10px;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text-dim);
+    font-family: var(--sans);
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s, border-color 0.15s;
+  }
+
+  .action-btn:hover {
+    background: var(--border);
+    color: var(--text);
+  }
+
+  .action-btn.copied {
+    background: var(--accent-dim);
+    border-color: rgba(46, 213, 115, 0.2);
+    color: var(--accent);
+  }
+
+  /* History */
+  .history-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+  }
+
+  .history-list {
+    max-height: 200px;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: var(--border) transparent;
+  }
+
+  .history-list::-webkit-scrollbar { width: 4px; }
+  .history-list::-webkit-scrollbar-track { background: transparent; }
+  .history-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+  .history-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border);
+    animation: fade-in 0.3s ease;
+  }
+
+  .history-item:last-child { border-bottom: none; }
+
+  @keyframes fade-in {
+    from { opacity: 0; transform: translateY(-4px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .history-mac {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text-dim);
+  }
+
+  .history-code {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--accent);
+    cursor: pointer;
+    transition: opacity 0.15s;
+  }
+
+  .history-code:hover { opacity: 0.7; }
+
+  .history-time {
+    font-size: 10px;
+    color: var(--text-muted);
+    margin-top: 2px;
+  }
+
+  .clear-btn {
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    font-size: 11px;
+    cursor: pointer;
+    font-family: var(--sans);
+    padding: 2px 6px;
+    border-radius: 4px;
+    transition: color 0.15s, background 0.15s;
+  }
+
+  .clear-btn:hover {
+    color: var(--danger);
+    background: rgba(255, 71, 87, 0.08);
+  }
+
+  .empty-state {
+    text-align: center;
+    padding: 20px 0;
+    font-size: 12px;
+    color: var(--text-muted);
+  }
+
+  /* Footer */
+  .footer {
+    margin-top: 24px;
+    text-align: center;
+    font-size: 11px;
+    color: var(--text-muted);
+  }
+
+  /* Responsive */
+  @media (max-width: 520px) {
+    body { padding: 16px; }
+    .header h1 { font-size: 22px; }
+    .result-code { font-size: 17px; }
+    .mac-input { font-size: 15px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <header class="header">
+    <div class="header-badge">商家专用</div>
+    <h1>BW16 <span>Keygen</span></h1>
+    <p>一机一码激活系统</p>
+  </header>
+
+  <div class="card">
+    <div class="card-section">
+      <label class="label">设备码 / MAC 地址</label>
+      <div class="input-wrap">
+        <input
+          type="text"
+          class="mac-input"
+          id="macInput"
+          placeholder="输入 12 位十六进制地址"
+          maxlength="17"
+          autocomplete="off"
+          spellcheck="false"
+        >
+      </div>
+      <div class="input-hint" id="macHint"></div>
+      <button class="gen-btn" id="genBtn" disabled>生成激活码</button>
+    </div>
+
+    <div class="card-section result-area">
+      <div class="result-label">激活码</div>
+      <div class="result-code" id="resultCode">—</div>
+      <div class="result-mac" id="resultMac"></div>
+      <div class="actions" id="actions" style="display:none">
+        <button class="action-btn" id="copyCodeBtn">复制激活码</button>
+        <button class="action-btn" id="copyMacBtn">复制设备码</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-section">
+      <div class="history-header">
+        <span class="label" style="margin:0">生成记录</span>
+        <button class="clear-btn" id="clearBtn">清空</button>
+      </div>
+      <div class="history-list" id="historyList">
+        <div class="empty-state" id="emptyState">暂无记录</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer">BW16-Deauther Activation System</div>
+</div>
+
+<script>
+// ── Crypto Logic (ported from activation_keygen.py) ──
+
+const SBOX = [
+  0x63,0x7c,0x77,0x7b,0xf2,0x6b,0x6f,0xc5,0x30,0x01,0x67,0x2b,0xfe,0xd7,0xab,0x76,
+  0xca,0x82,0xc9,0x7d,0xfa,0x59,0x47,0xf0,0xad,0xd4,0xa2,0xaf,0x9c,0xa4,0x72,0xc0,
+  0xb7,0xfd,0x93,0x26,0x36,0x3f,0xf7,0xcc,0x34,0xa5,0xe5,0xf1,0x71,0xd8,0x31,0x15,
+  0x04,0xc7,0x23,0xc3,0x18,0x96,0x05,0x9a,0x07,0x12,0x80,0xe2,0xeb,0x27,0xb2,0x75,
+  0x09,0x83,0x2c,0x1a,0x1b,0x6e,0x5a,0xa0,0x52,0x3b,0xd6,0xb3,0x29,0xe3,0x2f,0x84,
+  0x53,0xd1,0x00,0xed,0x20,0xfc,0xb1,0x5b,0x6a,0xcb,0xbe,0x39,0x4a,0x4c,0x58,0xcf,
+  0xd0,0xef,0xaa,0xfb,0x43,0x4d,0x33,0x85,0x45,0xf9,0x02,0x7f,0x50,0x3c,0x9f,0xa8,
+  0x51,0xa3,0x40,0x8f,0x92,0x9d,0x38,0xf5,0xbc,0xb6,0xda,0x21,0x10,0xff,0xf3,0xd2,
+  0xcd,0x0c,0x13,0xec,0x5f,0x97,0x44,0x17,0xc4,0xa7,0x7e,0x3d,0x64,0x5d,0x19,0x73,
+  0x60,0x81,0x4f,0xdc,0x22,0x2a,0x90,0x88,0x46,0xee,0xb8,0x14,0xde,0x5e,0x0b,0xdb,
+  0xe0,0x32,0x3a,0x0a,0x49,0x06,0x24,0x5c,0xc2,0xd3,0xac,0x62,0x91,0x95,0xe4,0x79,
+  0xe7,0xc8,0x37,0x6d,0x8d,0xd5,0x4e,0xa9,0x6c,0x56,0xf4,0xea,0x65,0x7a,0xae,0x08,
+  0xba,0x78,0x25,0x2e,0x1c,0xa6,0xb4,0xc6,0xe8,0xdd,0x74,0x1f,0x4b,0xbd,0x8b,0x8a,
+  0x70,0x3e,0xb5,0x66,0x48,0x03,0xf6,0x0e,0x61,0x35,0x57,0xb9,0x86,0xc1,0x1d,0x9e,
+  0xe1,0xf8,0x98,0x11,0x69,0xd9,0x8e,0x94,0x9b,0x1e,0x87,0xe9,0xce,0x55,0x28,0xdf,
+  0x8c,0xa1,0x89,0x0d,0xbf,0xe6,0x42,0x68,0x41,0x99,0x2d,0x0f,0xb0,0x54,0xbb,0x16
+];
+
+const OBFUSCATED_KEY = [
+  0xF2,0x94,0xA2,0x08,0x87,0xF2,0xC3,0xA7,0xD1,0xB0,0xD0,0x8B,0xC9,0x8F,0xE8,0xB3,
+  0xE4,0xA4,0x50,0x61,0x6D,0x5F,0x41,0x05,0x43,0x20,0x7E,0x2C,0x0E,0x39,0x15,0x02
+];
+
+const KEY_MASK = [
+  0x55,0xAA,0x33,0xCC,0x55,0xAA,0x33,0xCC,0x55,0xAA,0x33,0xCC,0x55,0xAA,0x33,0xCC,
+  0x55,0xAA,0x33,0xCC,0x55,0xAA,0x33,0xCC,0x55,0xAA,0x33,0xCC,0x55,0xAA,0x33,0xCC
+];
+
+function rotateLeft8(val, shift) {
+  shift = shift & 7;
+  return ((val << shift) | (val >>> (8 - shift))) & 0xFF;
+}
+
+function customHash(data) {
+  const state = new Uint8Array(16);
+  for (let i = 0; i < 16; i++) state[i] = (0x5A + i * 0x11) & 0xFF;
+
+  let offset = 0;
+  while (offset < data.length) {
+    for (let i = 0; i < 16; i++) {
+      if (offset < data.length) {
+        state[i] ^= data[offset];
+        offset++;
+      }
+    }
+    for (let round = 0; round < 8; round++) {
+      for (let i = 0; i < 16; i++) state[i] = SBOX[state[i]];
+      const temp = new Uint8Array(state);
+      for (let i = 0; i < 16; i++) {
+        state[i] = temp[i] ^ temp[(i + 1) % 16] ^ temp[(i + 2) % 16];
+      }
+      for (let i = 0; i < 16; i++) {
+        state[i] = rotateLeft8(state[i], (round + i) % 8);
+      }
+    }
+  }
+
+  for (let round = 0; round < 4; round++) {
+    for (let i = 0; i < 16; i++) state[i] = SBOX[state[i]];
+    const temp = new Uint8Array(state);
+    for (let i = 0; i < 16; i++) {
+      state[i] = temp[i] ^ temp[(i + 1) % 16];
+    }
+  }
+
+  return state;
+}
+
+function generateActivationCode(macStr) {
+  const secretKey = new Uint8Array(32);
+  for (let i = 0; i < 32; i++) secretKey[i] = OBFUSCATED_KEY[i] ^ KEY_MASK[i];
+
+  const macClean = macStr.replace(/[:\-\s]/g, '').toUpperCase();
+  if (macClean.length !== 12) throw new Error('MAC地址格式错误');
+
+  const macBytes = new Uint8Array(6);
+  for (let i = 0; i < 6; i++) {
+    macBytes[i] = parseInt(macClean.substring(i * 2, i * 2 + 2), 16);
+  }
+  if (macBytes.some(isNaN)) throw new Error('MAC地址包含无效字符');
+
+  // Step 1: Derive device-specific key
+  const dkIpad = new Uint8Array(38);
+  for (let i = 0; i < 32; i++) dkIpad[i] = secretKey[i] ^ 0x36;
+  dkIpad.set(macBytes, 32);
+  const dkInner = customHash(dkIpad);
+
+  const dkOpad = new Uint8Array(48);
+  for (let i = 0; i < 32; i++) dkOpad[i] = secretKey[i] ^ 0x5C;
+  dkOpad.set(dkInner, 32);
+  const deviceKey = customHash(dkOpad);
+
+  const deviceKey32 = new Uint8Array(32);
+  deviceKey32.set(deviceKey, 0);
+  deviceKey32.set(deviceKey, 16);
+
+  // Step 2: Generate code with device key
+  const codeIpad = new Uint8Array(38);
+  for (let i = 0; i < 32; i++) codeIpad[i] = deviceKey32[i] ^ 0x36;
+  codeIpad.set(macBytes, 32);
+  const codeInner = customHash(codeIpad);
+
+  const codeOpad = new Uint8Array(48);
+  for (let i = 0; i < 32; i++) codeOpad[i] = deviceKey32[i] ^ 0x5C;
+  codeOpad.set(codeInner, 32);
+  const codeHash = customHash(codeOpad);
+
+  // Step 3: Double hash
+  const doubleInput = new Uint8Array(22);
+  doubleInput.set(codeHash, 0);
+  doubleInput.set(macBytes, 16);
+  const finalHash = customHash(doubleInput);
+
+  // Step 4: Extract code + checksum
+  const codeBytes = finalHash.slice(0, 8);
+  const chkInput = new Uint8Array(14);
+  chkInput.set(codeBytes, 0);
+  chkInput.set(macBytes, 8);
+  const chkHash = customHash(chkInput);
+
+  let hex = '';
+  for (let i = 0; i < 8; i++) hex += codeBytes[i].toString(16).toUpperCase().padStart(2, '0');
+  hex += chkHash[0].toString(16).toUpperCase().padStart(2, '0');
+  hex += chkHash[1].toString(16).toUpperCase().padStart(2, '0');
+
+  return `${hex.slice(0,4)}-${hex.slice(4,8)}-${hex.slice(8,12)}-${hex.slice(12,16)}-${hex.slice(16,20)}`;
+}
+
+// ── UI Logic ──
+
+const macInput = document.getElementById('macInput');
+const macHint = document.getElementById('macHint');
+const genBtn = document.getElementById('genBtn');
+const resultCode = document.getElementById('resultCode');
+const resultMac = document.getElementById('resultMac');
+const actions = document.getElementById('actions');
+const copyCodeBtn = document.getElementById('copyCodeBtn');
+const copyMacBtn = document.getElementById('copyMacBtn');
+const historyList = document.getElementById('historyList');
+const emptyState = document.getElementById('emptyState');
+const clearBtn = document.getElementById('clearBtn');
+
+let currentCode = '';
+let currentMac = '';
+const history = [];
+
+function cleanMac(raw) {
+  return raw.replace(/[:\-\s]/g, '').toUpperCase().replace(/[^0-9A-F]/g, '');
+}
+
+function formatMacDisplay(clean) {
+  if (clean.length < 2) return clean;
+  return clean.match(/.{1,2}/g).join(':');
+}
+
+macInput.addEventListener('input', () => {
+  const raw = macInput.value;
+  const clean = cleanMac(raw);
+
+  if (clean.length > 12) {
+    macInput.value = clean.slice(0, 12);
+  }
+
+  if (clean.length === 12) {
+    try {
+      for (let i = 0; i < 6; i++) {
+        const b = parseInt(clean.substring(i * 2, i * 2 + 2), 16);
+        if (isNaN(b)) throw 0;
+      }
+      macHint.textContent = formatMacDisplay(clean);
+      macHint.className = 'input-hint ok';
+      macInput.className = 'mac-input valid';
+      genBtn.disabled = false;
+    } catch {
+      macHint.textContent = '包含无效的十六进制字符';
+      macHint.className = 'input-hint err';
+      macInput.className = 'mac-input invalid';
+      genBtn.disabled = true;
+    }
+  } else if (clean.length > 0) {
+    macHint.textContent = `已输入 ${clean.length} / 12 位`;
+    macHint.className = 'input-hint warn';
+    macInput.className = 'mac-input';
+    genBtn.disabled = true;
+  } else {
+    macHint.textContent = '';
+    macHint.className = 'input-hint';
+    macInput.className = 'mac-input';
+    genBtn.disabled = true;
+  }
+});
+
+macInput.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' && !genBtn.disabled) {
+    genBtn.click();
+  }
+});
+
+genBtn.addEventListener('click', () => {
+  const clean = cleanMac(macInput.value);
+  if (clean.length !== 12) return;
+
+  const macFormatted = formatMacDisplay(clean);
+  try {
+    const code = generateActivationCode(macFormatted);
+    currentCode = code;
+    currentMac = clean;
+
+    resultCode.textContent = code;
+    resultCode.className = 'result-code active';
+    resultMac.textContent = formatMacDisplay(clean);
+    actions.style.display = 'flex';
+
+    // Add to history
+    const now = new Date();
+    const time = now.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    history.unshift({ mac: clean, code, time });
+    renderHistory();
+
+  } catch (err) {
+    resultCode.textContent = '生成失败';
+    resultCode.className = 'result-code';
+    resultMac.textContent = err.message;
+  }
+});
+
+function copyText(text, btn) {
+  navigator.clipboard.writeText(text).then(() => {
+    const orig = btn.textContent;
+    btn.textContent = '已复制';
+    btn.classList.add('copied');
+    setTimeout(() => {
+      btn.textContent = orig;
+      btn.classList.remove('copied');
+    }, 1500);
+  });
+}
+
+copyCodeBtn.addEventListener('click', () => copyText(currentCode, copyCodeBtn));
+copyMacBtn.addEventListener('click', () => copyText(currentMac, copyMacBtn));
+
+function renderHistory() {
+  if (history.length === 0) {
+    historyList.innerHTML = '<div class="empty-state">暂无记录</div>';
+    return;
+  }
+
+  historyList.innerHTML = history.map(h => `
+    <div class="history-item">
+      <div>
+        <div class="history-mac">${formatMacDisplay(h.mac)}</div>
+        <div class="history-time">${h.time}</div>
+      </div>
+      <div class="history-code" onclick="copyText('${h.code}', this)" title="点击复制">${h.code}</div>
+    </div>
+  `).join('');
+}
+
+clearBtn.addEventListener('click', () => {
+  history.length = 0;
+  renderHistory();
+});
+
+// Auto-focus
+macInput.focus();
+</script>
+
+</body>
+</html>

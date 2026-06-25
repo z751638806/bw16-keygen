@@ -484,6 +484,68 @@
     margin-top: 16px;
   }
 
+
+  /* Statistics Card */
+  .stats-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+
+  .stat-item {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 14px;
+    text-align: center;
+  }
+
+  .stat-item .stat-value {
+    font-family: var(--mono);
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--accent);
+    line-height: 1.2;
+  }
+
+  .stat-item .stat-label {
+    font-size: 10px;
+    color: var(--text-muted);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    margin-top: 2px;
+  }
+
+  .stat-item.full {
+    grid-column: 1 / -1;
+  }
+
+  .stat-item .stat-sub {
+    font-size: 11px;
+    color: var(--text-dim);
+    margin-top: 4px;
+  }
+
+  .stat-item .stat-sub span {
+    color: var(--accent);
+    font-family: var(--mono);
+  }
+
+  .stat-bar {
+    margin-top: 10px;
+    height: 3px;
+    background: var(--border);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+
+  .stat-bar-fill {
+    height: 100%;
+    background: var(--accent);
+    border-radius: 2px;
+    transition: width 0.6s ease;
+  }
+
 </style>
 </head>
 <body>
@@ -549,13 +611,37 @@
     </div>
   </div>
 
-  <div class="footer">BW16-Deauther Activation System</div>
+    <div class="card" id="statsCard">
+    <div class="card-section">
+      <span class="label" style="margin:0">统计概览</span>
+      <div class="stats-grid" style="margin-top:12px;">
+        <div class="stat-item">
+          <div class="stat-value" id="statTotal">0</div>
+          <div class="stat-label">总生成次数</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-value" id="statDevices">0</div>
+          <div class="stat-label">唯一设备数</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-value" id="statToday">0</div>
+          <div class="stat-label">今日生成</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-value" id="statLatest">—</div>
+          <div class="stat-label">最近生成</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+<div class="footer">BW16-Deauther Activation System</div>
 </div>
 
 <script>
 
 // ── Access Control ──
-const ACCESS_PASSWORD = 'bw16keygen';
+const ACCESS_PASSWORD = 'PPDD751638806';
 
 const overlay = document.getElementById('overlay');
 const pwInput = document.getElementById('pwInput');
@@ -726,7 +812,44 @@ const clearBtn = document.getElementById('clearBtn');
 
 let currentCode = '';
 let currentMac = '';
-const history = [];
+
+// ── Persistence & Stats ──
+let history = [];
+const STORAGE_KEY = 'bw16_keygen_data';
+
+function loadPersistedData() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) {
+      const data = JSON.parse(raw);
+      history = data.history || [];
+    }
+  } catch(e) { history = []; }
+}
+
+function savePersistedData() {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ history }));
+  } catch(e) {}
+}
+
+function updateStats() {
+  const total = history.length;
+  const uniqueDevices = new Set(history.map(h => h.mac)).size;
+  const today = new Date().toDateString();
+  const todayCount = history.filter(h => {
+    try { return new Date(h.timestamp).toDateString() === today; } catch { return false; }
+  }).length;
+  const latest = history.length > 0 ? history[0].time : '—';
+
+  document.getElementById('statTotal').textContent = total;
+  document.getElementById('statDevices').textContent = uniqueDevices;
+  document.getElementById('statToday').textContent = todayCount;
+  document.getElementById('statLatest').textContent = latest;
+}
+
+loadPersistedData();
+updateStats();
 
 function cleanMac(raw) {
   return raw.replace(/[:\-\s]/g, '').toUpperCase().replace(/[^0-9A-F]/g, '');
@@ -797,9 +920,12 @@ genBtn.addEventListener('click', () => {
 
     // Add to history
     const now = new Date();
+    const nowStr = now.toISOString();
     const time = now.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-    history.unshift({ mac: clean, code, time });
+    history.unshift({ mac: clean, code, time, timestamp: nowStr });
+    savePersistedData();
     renderHistory();
+    updateStats();
 
   } catch (err) {
     resultCode.textContent = '生成失败';
@@ -842,7 +968,9 @@ function renderHistory() {
 
 clearBtn.addEventListener('click', () => {
   history.length = 0;
+  savePersistedData();
   renderHistory();
+  updateStats();
 });
 
 // Auto-focus
